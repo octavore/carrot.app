@@ -47,6 +47,23 @@ final class BreakScheduler: ObservableObject {
     private var timer: Timer?
     private let snoozeMinutes = 5
 
+    /// Reasons the timer is currently frozen due to system state rather than the
+    /// user's own pause toggle. Tracked as a set (rather than one bool) because
+    /// display sleep and the screensaver start/stop independently of each other.
+    enum IdleReason {
+        case displayAsleep
+        case screenSaverActive
+    }
+    private var idleReasons: Set<IdleReason> = []
+
+    func systemDidBecomeIdle(_ reason: IdleReason) {
+        idleReasons.insert(reason)
+    }
+
+    func systemDidBecomeActive(_ reason: IdleReason) {
+        idleReasons.remove(reason)
+    }
+
     private enum Keys {
         static let workInterval = "workIntervalMinutes"
         static let breakDuration = "breakDurationSeconds"
@@ -80,6 +97,7 @@ final class BreakScheduler: ObservableObject {
             pausedSeconds += 1
             return
         }
+        guard idleReasons.isEmpty else { return }
         if isOnBreak {
             guard !breakFinished else { return }
             secondsRemaining -= 1
