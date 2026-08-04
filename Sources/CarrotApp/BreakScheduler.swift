@@ -153,7 +153,7 @@ final class BreakScheduler: ObservableObject {
 
     var timeString: String {
         if timeDisplayFormat == .compact && secondsRemaining >= 120 {
-            return "\(secondsRemaining / 60)m"
+            return "\((secondsRemaining + 59) / 60)m"
         }
         return Self.fullTimeString(secondsRemaining)
     }
