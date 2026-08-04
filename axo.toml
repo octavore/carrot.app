@@ -1,1 +1,9 @@
 project_name = "carrot"
+
+[tasks]
+install = "strudel build --install"
+relaunch = [
+  ":install",
+  "pkill -f /Applications/Carrot.app || true",
+  "open /Applications/Carrot.app",
+]

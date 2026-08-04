@@ -1,12 +1,30 @@
 import Foundation
 import Combine
 
+enum TimeDisplayFormat: String, CaseIterable, Identifiable {
+    /// Always shows minutes and seconds, e.g. "9:42".
+    case full
+    /// Shows whole minutes only, e.g. "9m", once under 2 minutes remaining falls
+    /// back to the full "M:SS" form so the final countdown still reads precisely.
+    case compact
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .full: return "Full (9:42)"
+        case .compact: return "Compact (9m)"
+        }
+    }
+}
+
 @MainActor
 final class BreakScheduler: ObservableObject {
     @Published private(set) var isPaused = false
     @Published private(set) var isOnBreak = false
     @Published private(set) var breakFinished = false
     @Published private(set) var secondsRemaining: Int
+    @Published private(set) var pausedSeconds = 0
 
     @Published var workIntervalMinutes: Int {
         didSet {
@@ -19,6 +37,10 @@ final class BreakScheduler: ObservableObject {
         didSet { UserDefaults.standard.set(breakDurationSeconds, forKey: Keys.breakDuration) }
     }
 
+    @Published var timeDisplayFormat: TimeDisplayFormat {
+        didSet { UserDefaults.standard.set(timeDisplayFormat.rawValue, forKey: Keys.timeDisplayFormat) }
+    }
+
     /// Called with `true` when a break starts and `false` when it ends (including skip/snooze).
     var onBreakStateChange: ((Bool) -> Void)?
 
@@ -28,14 +50,17 @@ final class BreakScheduler: ObservableObject {
     private enum Keys {
         static let workInterval = "workIntervalMinutes"
         static let breakDuration = "breakDurationSeconds"
+        static let timeDisplayFormat = "timeDisplayFormat"
     }
 
     init() {
         let defaults = UserDefaults.standard
         let savedInterval = defaults.object(forKey: Keys.workInterval) as? Int ?? 20
         let savedDuration = defaults.object(forKey: Keys.breakDuration) as? Int ?? 20
+        let savedFormat = defaults.string(forKey: Keys.timeDisplayFormat).flatMap(TimeDisplayFormat.init) ?? .full
         workIntervalMinutes = savedInterval
         breakDurationSeconds = savedDuration
+        timeDisplayFormat = savedFormat
         secondsRemaining = savedInterval * 60
     }
 
@@ -51,7 +76,10 @@ final class BreakScheduler: ObservableObject {
     }
 
     private func tick() {
-        guard !isPaused else { return }
+        guard !isPaused else {
+            pausedSeconds += 1
+            return
+        }
         if isOnBreak {
             guard !breakFinished else { return }
             secondsRemaining -= 1
@@ -98,6 +126,19 @@ final class BreakScheduler: ObservableObject {
 
     func togglePause() {
         isPaused.toggle()
+        pausedSeconds = 0
+    }
+
+    /// Restarts the current countdown (work interval or break) from the beginning and unpauses.
+    func restart() {
+        if isOnBreak {
+            breakFinished = false
+            secondsRemaining = breakDurationSeconds
+        } else {
+            secondsRemaining = workIntervalMinutes * 60
+        }
+        isPaused = false
+        pausedSeconds = 0
     }
 
     func startBreakNow() {
@@ -111,8 +152,17 @@ final class BreakScheduler: ObservableObject {
     }
 
     var timeString: String {
-        let m = secondsRemaining / 60
-        let s = secondsRemaining % 60
-        return String(format: "%d:%02d", m, s)
+        if timeDisplayFormat == .compact && secondsRemaining >= 120 {
+            return "\(secondsRemaining / 60)m"
+        }
+        return Self.fullTimeString(secondsRemaining)
+    }
+
+    var pausedTimeString: String {
+        Self.fullTimeString(pausedSeconds)
+    }
+
+    private static func fullTimeString(_ seconds: Int) -> String {
+        String(format: "%d:%02d", seconds / 60, seconds % 60)
     }
 }

@@ -13,6 +13,7 @@ final class MenuBarController: NSObject {
 
     private let statusMenuItem = NSMenuItem()
     private let pauseMenuItem = NSMenuItem()
+    private let restartMenuItem = NSMenuItem()
     private let breakNowMenuItem = NSMenuItem()
 
     private lazy var settingsWindowController = SettingsWindowController(scheduler: scheduler)
@@ -48,6 +49,11 @@ final class MenuBarController: NSObject {
         pauseMenuItem.action = #selector(togglePause)
         menu.addItem(pauseMenuItem)
 
+        restartMenuItem.title = "Restart"
+        restartMenuItem.target = self
+        restartMenuItem.action = #selector(restart)
+        menu.addItem(restartMenuItem)
+
         breakNowMenuItem.title = "Take a Break Now"
         breakNowMenuItem.target = self
         breakNowMenuItem.action = #selector(startBreakNow)
@@ -78,25 +84,30 @@ final class MenuBarController: NSObject {
             )
             button.imagePosition = .imageLeading
             button.attributedTitle = NSAttributedString(
-                string: " \(scheduler.timeString)",
+                string: scheduler.isPaused ? " …" : " \(scheduler.timeString)",
                 attributes: [.font: Self.titleFont]
             )
         }
 
-        if scheduler.isOnBreak {
+        if scheduler.isPaused {
+            statusMenuItem.title = "Paused for \(scheduler.pausedTimeString)"
+        } else if scheduler.isOnBreak {
             statusMenuItem.title = "On break: \(scheduler.timeString)"
-        } else if scheduler.isPaused {
-            statusMenuItem.title = "Paused"
         } else {
             statusMenuItem.title = "Next break in \(scheduler.timeString)"
         }
 
         pauseMenuItem.title = scheduler.isPaused ? "Resume" : "Pause"
+        restartMenuItem.isHidden = !scheduler.isPaused
         breakNowMenuItem.isEnabled = !scheduler.isOnBreak
     }
 
     @objc private func togglePause() {
         scheduler.togglePause()
+    }
+
+    @objc private func restart() {
+        scheduler.restart()
     }
 
     @objc private func startBreakNow() {
