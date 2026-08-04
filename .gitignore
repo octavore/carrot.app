@@ -1,0 +1,4 @@
+# Swift package manager build artifacts
+.build/
+# strudel cache and intermediate build outputs
+.strudel/
