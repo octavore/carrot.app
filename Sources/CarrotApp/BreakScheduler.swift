@@ -18,6 +18,21 @@ enum TimeDisplayFormat: String, CaseIterable, Identifiable {
     }
 }
 
+enum AlertSound: String, CaseIterable, Identifiable {
+    case basso = "Basso"
+    case glass = "Glass"
+    case hero = "Hero"
+    case ping = "Ping"
+    case pop = "Pop"
+    case purr = "Purr"
+    case sosumi = "Sosumi"
+    case submarine = "Submarine"
+
+    var id: String { rawValue }
+
+    var label: String { rawValue }
+}
+
 @MainActor
 final class BreakScheduler: ObservableObject {
     @Published private(set) var isPaused = false
@@ -41,8 +56,23 @@ final class BreakScheduler: ObservableObject {
         didSet { UserDefaults.standard.set(timeDisplayFormat.rawValue, forKey: Keys.timeDisplayFormat) }
     }
 
+    @Published var alertSoundEnabled: Bool {
+        didSet { UserDefaults.standard.set(alertSoundEnabled, forKey: Keys.alertSoundEnabled) }
+    }
+
+    @Published var alertSound: AlertSound {
+        didSet { UserDefaults.standard.set(alertSound.rawValue, forKey: Keys.alertSound) }
+    }
+
+    @Published var alertVolume: Double {
+        didSet { UserDefaults.standard.set(alertVolume, forKey: Keys.alertVolume) }
+    }
+
     /// Called with `true` when a break starts and `false` when it ends (including skip/snooze).
     var onBreakStateChange: ((Bool) -> Void)?
+
+    /// Called once when the break countdown naturally reaches zero.
+    var onBreakFinished: (() -> Void)?
 
     private var timer: Timer?
     private let snoozeMinutes = 5
@@ -68,6 +98,9 @@ final class BreakScheduler: ObservableObject {
         static let workInterval = "workIntervalMinutes"
         static let breakDuration = "breakDurationSeconds"
         static let timeDisplayFormat = "timeDisplayFormat"
+        static let alertSoundEnabled = "alertSoundEnabled"
+        static let alertSound = "alertSound"
+        static let alertVolume = "alertVolume"
     }
 
     init() {
@@ -75,9 +108,13 @@ final class BreakScheduler: ObservableObject {
         let savedInterval = defaults.object(forKey: Keys.workInterval) as? Int ?? 20
         let savedDuration = defaults.object(forKey: Keys.breakDuration) as? Int ?? 20
         let savedFormat = defaults.string(forKey: Keys.timeDisplayFormat).flatMap(TimeDisplayFormat.init) ?? .full
+        let savedAlertSound = defaults.string(forKey: Keys.alertSound).flatMap(AlertSound.init) ?? .glass
         workIntervalMinutes = savedInterval
         breakDurationSeconds = savedDuration
         timeDisplayFormat = savedFormat
+        alertSoundEnabled = defaults.object(forKey: Keys.alertSoundEnabled) as? Bool ?? true
+        alertSound = savedAlertSound
+        alertVolume = defaults.object(forKey: Keys.alertVolume) as? Double ?? 1.0
         secondsRemaining = savedInterval * 60
     }
 
@@ -104,6 +141,7 @@ final class BreakScheduler: ObservableObject {
             if secondsRemaining <= 0 {
                 secondsRemaining = 0
                 breakFinished = true
+                onBreakFinished?()
             }
         } else {
             guard secondsRemaining > 0 else {

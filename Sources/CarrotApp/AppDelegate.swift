@@ -19,8 +19,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 self.overlayController.hide()
             }
         }
+        scheduler.onBreakFinished = { [weak self] in
+            self?.playBreakFinishedSound()
+        }
         scheduler.start()
         observeSystemIdleState()
+    }
+
+    private func playBreakFinishedSound() {
+        guard scheduler.alertSoundEnabled else { return }
+        SoundPlayer.play(scheduler.alertSound, volume: scheduler.alertVolume)
     }
 
     /// Freezes the countdown while the display is asleep or the screensaver is

@@ -12,7 +12,7 @@ import SwiftUI
 final class SettingsWindowController: NSWindowController {
     convenience init(scheduler: BreakScheduler) {
         let hostingController = NSHostingController(rootView: SettingsView(scheduler: scheduler))
-        hostingController.view.frame.size = hostingController.view.fittingSize
+        hostingController.sizingOptions = [.preferredContentSize, .minSize]
 
         let tabItem = NSTabViewItem(viewController: hostingController)
         tabItem.label = "General"
@@ -21,7 +21,6 @@ final class SettingsWindowController: NSWindowController {
         let tabViewController = NSTabViewController()
         tabViewController.tabStyle = .toolbar
         tabViewController.addTabViewItem(tabItem)
-        tabViewController.preferredContentSize = hostingController.view.fittingSize
 
         let window = NSWindow(contentViewController: tabViewController)
         window.styleMask = [.titled, .closable]

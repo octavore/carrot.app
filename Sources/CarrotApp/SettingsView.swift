@@ -1,5 +1,5 @@
-import SwiftUI
 import ServiceManagement
+import SwiftUI
 
 struct SettingsView: View {
     @ObservedObject var scheduler: BreakScheduler
@@ -21,14 +21,47 @@ struct SettingsView: View {
                         Text(format.label).tag(format)
                     }
                 }
+
+                LabeledContent("Play sound when break ends") {
+                    Toggle("", isOn: $scheduler.alertSoundEnabled)
+                        .labelsHidden()
+                }
+
+                if scheduler.alertSoundEnabled {
+                    LabeledContent("Alert sound") {
+                        HStack {
+                            Picker("", selection: $scheduler.alertSound) {
+                                ForEach(AlertSound.allCases) { sound in
+                                    Text(sound.label).tag(sound)
+                                }
+                            }
+                            .labelsHidden()
+                            .onChange(of: scheduler.alertSound) { _, newValue in
+                                SoundPlayer.play(newValue, volume: scheduler.alertVolume)
+                            }
+
+                            Button {
+                                SoundPlayer.play(scheduler.alertSound, volume: scheduler.alertVolume)
+                            } label: {
+                                Image(systemName: "play.fill")
+                            }
+                            .buttonStyle(.borderless)
+                        }
+                    }
+
+                    Slider(value: $scheduler.alertVolume, in: 0...1) {
+                        Text("Volume")
+                    }
+                }
             }
 
             Toggle("Launch at login", isOn: $launchAtLogin)
                 .onChange(of: launchAtLogin) { _, newValue in
-                    try? newValue ? SMAppService.mainApp.register() : SMAppService.mainApp.unregister()
+                    try? newValue
+                        ? SMAppService.mainApp.register() : SMAppService.mainApp.unregister()
                 }
         }
         .padding(24)
-        .frame(width: 320)
+        .frame(width: 360)
     }
 }
