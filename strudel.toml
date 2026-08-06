@@ -9,7 +9,7 @@ version      = "0.1.0"
 
 [build]
 target_name            = "CarrotApp"  # Swift target name; app.name is just the bundle
-icon.src               = "strudel/carrot.png"
+icon.src               = "assets/carrot.png"
 # icon.scale             = 1.2         # optional
 icon.background        = "#1B3A52"
 
