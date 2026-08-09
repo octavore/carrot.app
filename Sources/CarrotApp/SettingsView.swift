@@ -53,6 +53,17 @@ struct SettingsView: View {
                         Text("Volume")
                     }
                 }
+
+                LabeledContent("Restart after being away") {
+                    Toggle("", isOn: $scheduler.autoResetEnabled)
+                        .labelsHidden()
+                }
+
+                if scheduler.autoResetEnabled {
+                    Stepper(value: $scheduler.autoResetIdleMinutes, in: 1...120) {
+                        Text("Away for \(scheduler.autoResetIdleMinutes) minutes")
+                    }
+                }
             }
 
             Toggle("Launch at login", isOn: $launchAtLogin)

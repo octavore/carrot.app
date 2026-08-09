@@ -68,6 +68,14 @@ final class BreakScheduler: ObservableObject {
         didSet { UserDefaults.standard.set(alertVolume, forKey: Keys.alertVolume) }
     }
 
+    @Published var autoResetEnabled: Bool {
+        didSet { UserDefaults.standard.set(autoResetEnabled, forKey: Keys.autoResetEnabled) }
+    }
+
+    @Published var autoResetIdleMinutes: Int {
+        didSet { UserDefaults.standard.set(autoResetIdleMinutes, forKey: Keys.autoResetIdleMinutes) }
+    }
+
     /// Called with `true` when a break starts and `false` when it ends (including skip/snooze).
     var onBreakStateChange: ((Bool) -> Void)?
 
@@ -83,15 +91,31 @@ final class BreakScheduler: ObservableObject {
     enum IdleReason {
         case displayAsleep
         case screenSaverActive
+        case systemAsleep
     }
     private var idleReasons: Set<IdleReason> = []
 
+    /// When the current stretch of idleness began, i.e. when `idleReasons` first
+    /// became non-empty. Used to measure how long the machine has been away so a
+    /// long-enough absence can restart the countdown from scratch.
+    private var idleStartDate: Date?
+
     func systemDidBecomeIdle(_ reason: IdleReason) {
+        if idleReasons.isEmpty {
+            idleStartDate = Date()
+        }
         idleReasons.insert(reason)
     }
 
     func systemDidBecomeActive(_ reason: IdleReason) {
         idleReasons.remove(reason)
+        guard idleReasons.isEmpty, let idleStartDate else { return }
+        self.idleStartDate = nil
+
+        let idleDuration = Date().timeIntervalSince(idleStartDate)
+        if autoResetEnabled && idleDuration >= Double(autoResetIdleMinutes * 60) {
+            restart()
+        }
     }
 
     private enum Keys {
@@ -101,6 +125,8 @@ final class BreakScheduler: ObservableObject {
         static let alertSoundEnabled = "alertSoundEnabled"
         static let alertSound = "alertSound"
         static let alertVolume = "alertVolume"
+        static let autoResetEnabled = "autoResetEnabled"
+        static let autoResetIdleMinutes = "autoResetIdleMinutes"
     }
 
     init() {
@@ -115,6 +141,8 @@ final class BreakScheduler: ObservableObject {
         alertSoundEnabled = defaults.object(forKey: Keys.alertSoundEnabled) as? Bool ?? true
         alertSound = savedAlertSound
         alertVolume = defaults.object(forKey: Keys.alertVolume) as? Double ?? 1.0
+        autoResetEnabled = defaults.object(forKey: Keys.autoResetEnabled) as? Bool ?? true
+        autoResetIdleMinutes = defaults.object(forKey: Keys.autoResetIdleMinutes) as? Int ?? 5
         secondsRemaining = savedInterval * 60
     }
 

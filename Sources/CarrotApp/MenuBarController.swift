@@ -98,7 +98,6 @@ final class MenuBarController: NSObject {
         }
 
         pauseMenuItem.title = scheduler.isPaused ? "Resume" : "Pause"
-        restartMenuItem.isHidden = !scheduler.isPaused
         breakNowMenuItem.isEnabled = !scheduler.isOnBreak
     }
 
