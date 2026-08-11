@@ -103,6 +103,10 @@ final class BreakScheduler: ObservableObject {
     func systemDidBecomeIdle(_ reason: IdleReason) {
         if idleReasons.isEmpty {
             idleStartDate = Date()
+            // Reset if the screen went away while a break was up.
+            if isOnBreak {
+                skipBreak()
+            }
         }
         idleReasons.insert(reason)
     }
