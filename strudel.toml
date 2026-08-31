@@ -13,6 +13,21 @@ icon.src               = "assets/carrot.png"
 # icon.scale             = 1.2         # optional
 icon.background        = "#1B3A52"
 
+resources              = ["Resources/carrot-media.pl"]
+
+# The media shim is loaded into /usr/bin/perl at runtime, never by Carrot, so it
+# is copied rather than embedded: embed_libs expects the executable to link the
+# dylib and rewrites its load command. It still needs signing of its own for
+# notarization. See research/2026-08-31-mediaremote-perl-adapter.md.
+[[build.copy]]
+#
+# Unlike `resources` and `embed_libs`, `src` here has no .build fallback, so the
+# triple is spelled out. Setting `archs` for a universal build changes that path
+# and this line has to change with it; the build fails loudly if it doesn't.
+src      = ".build/arm64-apple-macosx/release/libCarrotMediaShim.dylib"
+dest_dir = "Contents/Frameworks"
+sign     = true
+
 # Apple developer identifiers, used for signing and notarization.
 # Can also be set via env vars.
 # [apple]

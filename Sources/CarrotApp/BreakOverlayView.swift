@@ -2,6 +2,7 @@ import SwiftUI
 
 struct BreakOverlayView: View {
     @ObservedObject var scheduler: BreakScheduler
+    @ObservedObject var media: MediaController
     let onSkip: () -> Void
     let onSnooze: () -> Void
     let onDismiss: () -> Void
@@ -106,7 +107,42 @@ struct BreakOverlayView: View {
                     .buttonStyle(.borderedProminent)
                     .controlSize(.large)
             }
+
+            if scheduler.mediaControlsEnabled && media.available {
+                mediaControls
+                    .padding(.top, 8)
+            }
         }
+    }
+
+    /// Stays visible with nothing playing, so the user can start whatever the
+    /// break paused back up without leaving the overlay.
+    private var mediaControls: some View {
+        HStack(spacing: 12) {
+            Button(action: media.togglePlayPause) {
+                Image(systemName: media.isPlaying ? "pause.fill" : "play.fill")
+                    .font(.system(size: 15))
+                    .frame(width: 20)
+            }
+            .buttonStyle(.borderless)
+            .foregroundStyle(.white)
+
+            VStack(alignment: .leading, spacing: 1) {
+                Text(media.title ?? "Nothing playing")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(.white.opacity(media.title == nil ? 0.5 : 0.9))
+                if let artist = media.artist, !artist.isEmpty {
+                    Text(artist)
+                        .font(.system(size: 11))
+                        .foregroundStyle(.white.opacity(0.55))
+                }
+            }
+            .lineLimit(1)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .frame(maxWidth: 320)
+        .background(.white.opacity(0.1), in: Capsule())
     }
 
     private var finishedContent: some View {

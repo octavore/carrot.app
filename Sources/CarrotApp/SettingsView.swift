@@ -54,6 +54,16 @@ struct SettingsView: View {
                     }
                 }
 
+                LabeledContent("Show media controls during breaks") {
+                    Toggle("", isOn: $scheduler.mediaControlsEnabled)
+                        .labelsHidden()
+                }
+
+                LabeledContent("Pause media during breaks") {
+                    Toggle("", isOn: $scheduler.autoPauseMediaEnabled)
+                        .labelsHidden()
+                }
+
                 LabeledContent("Restart after being away") {
                     Toggle("", isOn: $scheduler.autoResetEnabled)
                         .labelsHidden()

@@ -4,6 +4,7 @@ import AppKit
 final class AppDelegate: NSObject, NSApplicationDelegate {
     let scheduler = BreakScheduler()
     private let overlayController = BreakOverlayController()
+    private let mediaController = MediaController()
     private var menuBarController: MenuBarController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -14,8 +15,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         scheduler.onBreakStateChange = { [weak self] isOnBreak in
             guard let self else { return }
             if isOnBreak {
-                self.overlayController.show(scheduler: self.scheduler)
+                // The helper only runs for the length of a break, and only when
+                // a media setting asks for it.
+                if self.scheduler.mediaControlsEnabled || self.scheduler.autoPauseMediaEnabled {
+                    self.mediaController.beginBreak(
+                        autoPause: self.scheduler.autoPauseMediaEnabled
+                    )
+                }
+                self.overlayController.show(scheduler: self.scheduler, media: self.mediaController)
             } else {
+                self.mediaController.endBreak()
                 self.overlayController.hide()
             }
         }
@@ -24,6 +33,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         scheduler.start()
         observeSystemIdleState()
+    }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        mediaController.stop()
     }
 
     private func playBreakFinishedSound() {

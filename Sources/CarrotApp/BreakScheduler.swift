@@ -68,6 +68,14 @@ final class BreakScheduler: ObservableObject {
         didSet { UserDefaults.standard.set(alertVolume, forKey: Keys.alertVolume) }
     }
 
+    @Published var mediaControlsEnabled: Bool {
+        didSet { UserDefaults.standard.set(mediaControlsEnabled, forKey: Keys.mediaControlsEnabled) }
+    }
+
+    @Published var autoPauseMediaEnabled: Bool {
+        didSet { UserDefaults.standard.set(autoPauseMediaEnabled, forKey: Keys.autoPauseMediaEnabled) }
+    }
+
     @Published var autoResetEnabled: Bool {
         didSet { UserDefaults.standard.set(autoResetEnabled, forKey: Keys.autoResetEnabled) }
     }
@@ -129,6 +137,8 @@ final class BreakScheduler: ObservableObject {
         static let alertSoundEnabled = "alertSoundEnabled"
         static let alertSound = "alertSound"
         static let alertVolume = "alertVolume"
+        static let mediaControlsEnabled = "mediaControlsEnabled"
+        static let autoPauseMediaEnabled = "autoPauseMediaEnabled"
         static let autoResetEnabled = "autoResetEnabled"
         static let autoResetIdleMinutes = "autoResetIdleMinutes"
     }
@@ -145,6 +155,8 @@ final class BreakScheduler: ObservableObject {
         alertSoundEnabled = defaults.object(forKey: Keys.alertSoundEnabled) as? Bool ?? true
         alertSound = savedAlertSound
         alertVolume = defaults.object(forKey: Keys.alertVolume) as? Double ?? 1.0
+        mediaControlsEnabled = defaults.object(forKey: Keys.mediaControlsEnabled) as? Bool ?? true
+        autoPauseMediaEnabled = defaults.object(forKey: Keys.autoPauseMediaEnabled) as? Bool ?? true
         autoResetEnabled = defaults.object(forKey: Keys.autoResetEnabled) as? Bool ?? true
         autoResetIdleMinutes = defaults.object(forKey: Keys.autoResetIdleMinutes) as? Int ?? 5
         secondsRemaining = savedInterval * 60

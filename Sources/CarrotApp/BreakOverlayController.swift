@@ -14,7 +14,7 @@ final class BreakOverlayController {
     private var windows: [NSWindow] = []
     private var keyMonitor: Any?
 
-    func show(scheduler: BreakScheduler) {
+    func show(scheduler: BreakScheduler, media: MediaController) {
         guard windows.isEmpty else { return }
 
         windows = NSScreen.screens.map { screen in
@@ -33,6 +33,7 @@ final class BreakOverlayController {
             window.contentView = NSHostingView(
                 rootView: BreakOverlayView(
                     scheduler: scheduler,
+                    media: media,
                     onSkip: { scheduler.skipBreak() },
                     onSnooze: { scheduler.snoozeBreak() },
                     onDismiss: { scheduler.skipBreak() }
