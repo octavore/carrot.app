@@ -45,19 +45,19 @@ final class MenuBarController: NSObject {
         menu.addItem(statusMenuItem)
         menu.addItem(.separator())
 
-        pauseMenuItem.target = self
-        pauseMenuItem.action = #selector(togglePause)
-        menu.addItem(pauseMenuItem)
+        breakNowMenuItem.title = "Take a Break Now"
+        breakNowMenuItem.target = self
+        breakNowMenuItem.action = #selector(startBreakNow)
+        menu.addItem(breakNowMenuItem)
 
         restartMenuItem.title = "Restart"
         restartMenuItem.target = self
         restartMenuItem.action = #selector(restart)
         menu.addItem(restartMenuItem)
 
-        breakNowMenuItem.title = "Take a Break Now"
-        breakNowMenuItem.target = self
-        breakNowMenuItem.action = #selector(startBreakNow)
-        menu.addItem(breakNowMenuItem)
+        pauseMenuItem.target = self
+        pauseMenuItem.action = #selector(togglePause)
+        menu.addItem(pauseMenuItem)
 
         menu.addItem(.separator())
 
@@ -97,7 +97,7 @@ final class MenuBarController: NSObject {
             statusMenuItem.title = "Next break in \(scheduler.timeString)"
         }
 
-        pauseMenuItem.title = scheduler.isPaused ? "Resume" : "Pause"
+        pauseMenuItem.title = scheduler.isPaused ? "Resume breaks" : "Pause breaks"
         breakNowMenuItem.isEnabled = !scheduler.isOnBreak
     }
 
