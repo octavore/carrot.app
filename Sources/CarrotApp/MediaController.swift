@@ -22,6 +22,12 @@ final class MediaController: ObservableObject {
     @Published private(set) var title: String?
     @Published private(set) var artist: String?
 
+    /// True when there is something for the user to control: media is playing,
+    /// or this break paused media that it can resume. False when nothing was
+    /// playing at the start of the break, which is when callers hide their
+    /// media UI. A stale title left over from a stopped player does not count.
+    var hasTrack: Bool { isPlaying || sawPlaybackThisBreak }
+
     /// MediaRemote command ids.
     private enum Command: Int {
         case play = 0
@@ -31,6 +37,11 @@ final class MediaController: ObservableObject {
     /// Set when a break paused media that was playing, so the same break can put
     /// it back and nothing else does.
     private var didAutoPause = false
+
+    /// Latched true once the helper reports playback during a break, so pausing
+    /// from the overlay button does not make the controls disappear. Reset at
+    /// each break boundary.
+    @Published private(set) var sawPlaybackThisBreak = false
 
     /// Set when a break has started and the auto-pause decision is still waiting
     /// on the helper's first report of what is playing.
@@ -77,6 +88,7 @@ final class MediaController: ObservableObject {
     /// break.
     func beginBreak(autoPause: Bool) {
         pendingAutoPause = autoPause
+        sawPlaybackThisBreak = false
         start()
     }
 
@@ -125,6 +137,7 @@ final class MediaController: ObservableObject {
 
     func stop() {
         pendingAutoPause = false
+        sawPlaybackThisBreak = false
         guard let streamProcess else { return }
         self.streamProcess = nil
         streamProcess.terminationHandler = nil
@@ -183,6 +196,7 @@ final class MediaController: ObservableObject {
         isPlaying = payload.playing
         title = payload.title
         artist = payload.artist
+        if payload.playing { sawPlaybackThisBreak = true }
 
         // The first report after a break starts is what the auto-pause decision
         // was waiting for. Later reports are just the overlay tracking changes.

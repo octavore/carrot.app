@@ -108,15 +108,16 @@ struct BreakOverlayView: View {
                     .controlSize(.large)
             }
 
-            if scheduler.mediaControlsEnabled && media.available {
+            if scheduler.mediaControlsEnabled && media.available && media.hasTrack {
                 mediaControls
                     .padding(.top, 8)
             }
         }
     }
 
-    /// Stays visible with nothing playing, so the user can start whatever the
-    /// break paused back up without leaving the overlay.
+    /// Shown only when there is a track to control, including one this break
+    /// paused, so the user can resume it without leaving the overlay. Hidden
+    /// when nothing is playing or loaded.
     private var mediaControls: some View {
         HStack(spacing: 12) {
             Button(action: media.togglePlayPause) {
