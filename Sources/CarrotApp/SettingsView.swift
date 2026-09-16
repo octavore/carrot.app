@@ -74,6 +74,11 @@ struct SettingsView: View {
                         Text("Away for \(scheduler.autoResetIdleMinutes) minutes")
                     }
                 }
+
+                LabeledContent("Show time during breaks") {
+                    Toggle("", isOn: $scheduler.showTimeOnBreakScreen)
+                        .labelsHidden()
+                }
             }
 
             Toggle("Launch at login", isOn: $launchAtLogin)

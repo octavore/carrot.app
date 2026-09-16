@@ -84,6 +84,10 @@ final class BreakScheduler: ObservableObject {
         didSet { UserDefaults.standard.set(autoResetIdleMinutes, forKey: Keys.autoResetIdleMinutes) }
     }
 
+    @Published var showTimeOnBreakScreen: Bool {
+        didSet { UserDefaults.standard.set(showTimeOnBreakScreen, forKey: Keys.showTimeOnBreakScreen) }
+    }
+
     /// Called with `true` when a break starts and `false` when it ends (including skip/snooze).
     var onBreakStateChange: ((Bool) -> Void)?
 
@@ -141,6 +145,7 @@ final class BreakScheduler: ObservableObject {
         static let autoPauseMediaEnabled = "autoPauseMediaEnabled"
         static let autoResetEnabled = "autoResetEnabled"
         static let autoResetIdleMinutes = "autoResetIdleMinutes"
+        static let showTimeOnBreakScreen = "showTimeOnBreakScreen"
     }
 
     init() {
@@ -159,6 +164,7 @@ final class BreakScheduler: ObservableObject {
         autoPauseMediaEnabled = defaults.object(forKey: Keys.autoPauseMediaEnabled) as? Bool ?? true
         autoResetEnabled = defaults.object(forKey: Keys.autoResetEnabled) as? Bool ?? true
         autoResetIdleMinutes = defaults.object(forKey: Keys.autoResetIdleMinutes) as? Int ?? 5
+        showTimeOnBreakScreen = defaults.object(forKey: Keys.showTimeOnBreakScreen) as? Bool ?? false
         secondsRemaining = savedInterval * 60
     }
 

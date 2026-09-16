@@ -47,6 +47,17 @@ struct BreakOverlayView: View {
             } else {
                 countdownContent
             }
+
+            if scheduler.showTimeOnBreakScreen {
+                VStack {
+                    Spacer()
+                    Text(Date(), style: .time)
+                        .font(.system(size: 15, weight: .medium, design: .rounded))
+                        .foregroundStyle(.white.opacity(0.5))
+                        .padding(.bottom, 20)
+                }
+                .allowsHitTesting(false)
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onAppear { hasAppeared = true }
