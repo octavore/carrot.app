@@ -1,6 +1,7 @@
 project_name = "carrot"
 
 [tasks]
+fmt = "swift format -i --recursive Sources/"
 install = "strudel build --install"
 relaunch = [
   ":install",
