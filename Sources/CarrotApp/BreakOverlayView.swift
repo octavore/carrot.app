@@ -112,11 +112,9 @@ struct BreakOverlayView: View {
 
             HStack(spacing: 16) {
                 Button("Snooze 5 min", action: onSnooze)
-                    .buttonStyle(.bordered)
-                    .controlSize(.large)
+                    .buttonStyle(PillButtonStyle())
                 Button("Skip", action: onSkip)
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.large)
+                    .buttonStyle(PillButtonStyle(prominent: true))
             }
 
             if scheduler.mediaControlsEnabled && media.available && media.hasTrack {
@@ -174,8 +172,34 @@ struct BreakOverlayView: View {
                 .foregroundStyle(.white.opacity(0.6))
 
             Button("Continue Working", action: onDismiss)
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
+                .buttonStyle(PillButtonStyle(prominent: true))
         }
+    }
+}
+
+/// Large pill-shaped button used on the break overlay. `prominent` fills the
+/// pill solid white; the non-prominent variant is a translucent outline so it
+/// reads as secondary against the blurred background.
+private struct PillButtonStyle: ButtonStyle {
+    var prominent: Bool = false
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 17, weight: .semibold))
+            .foregroundStyle(.white)
+            .frame(minWidth: 130, minHeight: 22)
+            .padding(.horizontal, 32)
+            .padding(.vertical, 16)
+            .background(
+                Capsule()
+                    .fill(prominent ? Color.accentColor : Color.white.opacity(0.14))
+            )
+            .overlay(
+                Capsule()
+                    .strokeBorder(.white.opacity(prominent ? 0 : 0.3), lineWidth: 1)
+            )
+            .opacity(configuration.isPressed ? 0.75 : 1)
+            .scaleEffect(configuration.isPressed ? 0.96 : 1)
+            .animation(.easeOut(duration: 0.15), value: configuration.isPressed)
     }
 }
