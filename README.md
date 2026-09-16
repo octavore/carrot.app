@@ -11,7 +11,9 @@ A menu bar app that reminds you to look away from your computer, built with [str
 - Play sound and flash screen when break ends
 - Free!
 
-<img src="docs/images/screenshot.png" alt="Carrot break screen showing 'Look 20 feet away'">
+<p align="center">
+  <img src="docs/images/screenshot.jpg" alt="Carrot break screen showing 'Look 20 feet away'" width="600">
+</p>
 
 ## Download
 
