@@ -1,4 +1,5 @@
 import AppKit
+import SunshineUI
 import SwiftUI
 
 /// Hosts the settings panes in a plain window via an `NSTabViewController` in
@@ -10,7 +11,10 @@ import SwiftUI
 /// `TabView` gets the native icon+label treatment for free.
 @MainActor
 final class SettingsWindowController: NSWindowController {
-    convenience init(scheduler: BreakScheduler) {
+    private let tabViewController: NSTabViewController
+    private let updatesTabIndex: Int
+
+    init(scheduler: BreakScheduler, updaterUI: SunshineUpdaterUIController) {
         let tabViewController = NSTabViewController()
         tabViewController.tabStyle = .toolbar
         // The window title is bound to the content view controller's title. The tab
@@ -31,12 +35,22 @@ final class SettingsWindowController: NSWindowController {
         addTab(label: "General", symbol: "gearshape", view: GeneralSettingsView(scheduler: scheduler))
         addTab(label: "Schedule", symbol: "timer", view: ScheduleSettingsView(scheduler: scheduler))
         addTab(label: "Break", symbol: "eye", view: BreakScreenSettingsView(scheduler: scheduler))
+        addTab(
+            label: "Updates", symbol: "arrow.down.circle",
+            view: ScrollView { SunshineUpdateSettingsView(controller: updaterUI, appName: "Carrot") })
+        updatesTabIndex = tabViewController.tabViewItems.count - 1
 
         let window = NSWindow(contentViewController: tabViewController)
         window.styleMask = [.titled, .closable]
         window.isReleasedWhenClosed = false
 
-        self.init(window: window)
+        self.tabViewController = tabViewController
+        super.init(window: window)
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
     }
 
     func show() {
@@ -45,5 +59,10 @@ final class SettingsWindowController: NSWindowController {
         }
         NSApp.activate(ignoringOtherApps: true)
         showWindow(nil)
+    }
+
+    func showUpdatesTab() {
+        tabViewController.selectedTabViewItemIndex = updatesTabIndex
+        show()
     }
 }

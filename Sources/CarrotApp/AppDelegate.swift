@@ -1,4 +1,6 @@
 import AppKit
+import SunshineCore
+import SunshineUI
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
@@ -7,10 +9,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let mediaController = MediaController()
     private var menuBarController: MenuBarController?
 
+    private let updaterUI = SunshineUpdaterUIController(
+        updater: SunshineUpdater(
+            configuration: SunshineConfiguration(
+                owner: "octavore",
+                repo: "carrot.app",
+                checkInterval: 3600
+            ))
+    )
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
 
-        menuBarController = MenuBarController(scheduler: scheduler)
+        menuBarController = MenuBarController(scheduler: scheduler, updaterUI: updaterUI)
 
         scheduler.onBreakStateChange = { [weak self] isOnBreak in
             guard let self else { return }

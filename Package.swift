@@ -10,9 +10,15 @@ let package = Package(
         // on macOS 15.4+. See research/2026-08-31-mediaremote-perl-adapter.md.
         .library(name: "CarrotMediaShim", type: .dynamic, targets: ["CarrotMediaShim"]),
     ],
+    dependencies: [
+        .package(url: "git@github.com:octavore/sunshine.git", branch: "main"),
+    ],
     targets: [
         .executableTarget(
             name: "CarrotApp",
+            dependencies: [
+                .product(name: "Sunshine", package: "sunshine"),
+            ],
             path: "Sources/CarrotApp"
         ),
         .target(

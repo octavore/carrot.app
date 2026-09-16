@@ -1,5 +1,6 @@
 import AppKit
 import Combine
+import SunshineUI
 import SwiftUI
 
 /// Owns the status bar item. Uses AppKit directly rather than SwiftUI's `MenuBarExtra`
@@ -8,6 +9,7 @@ import SwiftUI
 @MainActor
 final class MenuBarController: NSObject {
     private let scheduler: BreakScheduler
+    private let updaterUI: SunshineUpdaterUIController
     private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
     private var cancellable: AnyCancellable?
 
@@ -15,23 +17,38 @@ final class MenuBarController: NSObject {
     private let pauseMenuItem = NSMenuItem()
     private let restartMenuItem = NSMenuItem()
     private let breakNowMenuItem = NSMenuItem()
+    private let checkForUpdatesMenuItem = NSMenuItem()
 
-    private lazy var settingsWindowController = SettingsWindowController(scheduler: scheduler)
+    /// Small red dot pinned over the status item's icon while an update is pending,
+    /// so a found update is visible without opening the menu.
+    private let updateBadgeView: NSView = {
+        let view = NSView()
+        view.wantsLayer = true
+        view.layer?.backgroundColor = NSColor.systemRed.cgColor
+        view.layer?.cornerRadius = 3
+        view.isHidden = true
+        return view
+    }()
+
+    private lazy var settingsWindowController = SettingsWindowController(
+        scheduler: scheduler, updaterUI: updaterUI)
 
     private static let titleFont: NSFont = .monospacedDigitSystemFont(
         ofSize: NSFont.menuBarFont(ofSize: 0).pointSize,
         weight: .regular
     )
 
-    init(scheduler: BreakScheduler) {
+    init(scheduler: BreakScheduler, updaterUI: SunshineUpdaterUIController) {
         self.scheduler = scheduler
+        self.updaterUI = updaterUI
         super.init()
 
         buildMenu()
+        statusItem.button?.addSubview(updateBadgeView)
 
         // `objectWillChange` fires before the properties are updated, so hop to the
         // next run loop pass to read the new values.
-        cancellable = scheduler.objectWillChange
+        cancellable = Publishers.Merge(scheduler.objectWillChange, updaterUI.objectWillChange)
             .receive(on: RunLoop.main)
             .sink { [weak self] in self?.refresh() }
 
@@ -64,6 +81,10 @@ final class MenuBarController: NSObject {
         let settings = NSMenuItem(title: "Settings…", action: #selector(openSettings), keyEquivalent: ",")
         settings.target = self
         menu.addItem(settings)
+
+        checkForUpdatesMenuItem.target = self
+        checkForUpdatesMenuItem.action = #selector(checkForUpdates)
+        menu.addItem(checkForUpdatesMenuItem)
 
         menu.addItem(.separator())
 
@@ -99,6 +120,15 @@ final class MenuBarController: NSObject {
 
         pauseMenuItem.title = scheduler.isPaused ? "Resume breaks" : "Pause breaks"
         breakNowMenuItem.isEnabled = !scheduler.isOnBreak
+
+        let updatePending = updaterUI.pendingUpdate != nil
+        checkForUpdatesMenuItem.title = updatePending ? "Update Available…" : "Check for Updates…"
+
+        let badgeDiameter: CGFloat = 6
+        updateBadgeView.frame = NSRect(
+            x: 9, y: NSStatusBar.system.thickness - badgeDiameter - 3,
+            width: badgeDiameter, height: badgeDiameter)
+        updateBadgeView.isHidden = !updatePending
     }
 
     @objc private func togglePause() {
@@ -115,6 +145,10 @@ final class MenuBarController: NSObject {
 
     @objc private func openSettings() {
         settingsWindowController.show()
+    }
+
+    @objc private func checkForUpdates() {
+        settingsWindowController.showUpdatesTab()
     }
 
     @objc private func quit() {
