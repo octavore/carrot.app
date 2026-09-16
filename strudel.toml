@@ -4,7 +4,7 @@
 [app]
 name         = "Carrot"
 bundle_id    = "com.breakfastlabs.carrot"
-version      = "0.1.0"
+version      = "0.2.0"
 # build_number = "1"  # optional, defaults to "1"
 
 [build]
