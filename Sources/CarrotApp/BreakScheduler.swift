@@ -251,6 +251,8 @@ final class BreakScheduler: ObservableObject {
 
   func startBreakNow() {
     guard !isOnBreak else { return }
+    isPaused = false
+    pausedSeconds = 0
     startBreak()
   }
 
