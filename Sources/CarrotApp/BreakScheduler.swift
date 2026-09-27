@@ -97,6 +97,10 @@ final class BreakScheduler: ObservableObject {
   private var timer: Timer?
   private let snoozeMinutes = 5
 
+  /// When a timed pause (`pause(forMinutes:)`) should auto-resume. `nil` for an
+  /// indefinite pause started via `togglePause()`.
+  private var pauseUntil: Date?
+
   /// Reasons the timer is currently frozen due to system state rather than the
   /// user's own pause toggle. Tracked as a set (rather than one bool) because
   /// display sleep and the screensaver start/stop independently of each other.
@@ -109,7 +113,7 @@ final class BreakScheduler: ObservableObject {
 
   /// When the current stretch of idleness began, i.e. when `idleReasons` first
   /// became non-empty. Used to measure how long the machine has been away so a
-  /// long-enough absence can restart the countdown from scratch.
+  /// long-enough absence can reset the countdown from scratch.
   private var idleStartDate: Date?
 
   func systemDidBecomeIdle(_ reason: IdleReason) {
@@ -130,7 +134,7 @@ final class BreakScheduler: ObservableObject {
 
     let idleDuration = Date().timeIntervalSince(idleStartDate)
     if autoResetEnabled && idleDuration >= Double(autoResetIdleMinutes * 60) {
-      restart()
+      resetCountdown()
     }
   }
 
@@ -184,6 +188,9 @@ final class BreakScheduler: ObservableObject {
   private func tick() {
     guard !isPaused else {
       pausedSeconds += 1
+      if let pauseUntil, Date() >= pauseUntil {
+        resume()
+      }
       return
     }
     guard idleReasons.isEmpty else { return }
@@ -233,12 +240,37 @@ final class BreakScheduler: ObservableObject {
   }
 
   func togglePause() {
-    isPaused.toggle()
-    pausedSeconds = 0
+    if isPaused {
+      resume()
+    } else {
+      isPaused = true
+      pausedSeconds = 0
+      pauseUntil = nil
+    }
   }
 
-  /// Restarts the current countdown (work interval or break) from the beginning and unpauses.
-  func restart() {
+  /// Pauses breaks until the given number of minutes elapse, auto-resuming on its own.
+  func pause(forMinutes minutes: Int) {
+    isPaused = true
+    pausedSeconds = 0
+    pauseUntil = Date().addingTimeInterval(Double(minutes * 60))
+  }
+
+  /// Unpauses. If the pause lasted at least as long as the away threshold, the
+  /// countdown is reset from scratch, matching the behavior of coming back from
+  /// the machine being idle/asleep for that long.
+  private func resume() {
+    let wasAwayLongEnough = autoResetEnabled && pausedSeconds >= autoResetIdleMinutes * 60
+    isPaused = false
+    pausedSeconds = 0
+    pauseUntil = nil
+    if wasAwayLongEnough {
+      resetCountdown()
+    }
+  }
+
+  /// Resets the current countdown (work interval or break) from the beginning and unpauses.
+  func resetCountdown() {
     if isOnBreak {
       breakFinished = false
       secondsRemaining = breakDurationSeconds
@@ -247,12 +279,14 @@ final class BreakScheduler: ObservableObject {
     }
     isPaused = false
     pausedSeconds = 0
+    pauseUntil = nil
   }
 
   func startBreakNow() {
     guard !isOnBreak else { return }
     isPaused = false
     pausedSeconds = 0
+    pauseUntil = nil
     startBreak()
   }
 

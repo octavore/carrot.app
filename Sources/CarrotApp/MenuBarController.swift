@@ -15,7 +15,9 @@ final class MenuBarController: NSObject {
 
   private let statusMenuItem = NSMenuItem()
   private let pauseMenuItem = NSMenuItem()
-  private let restartMenuItem = NSMenuItem()
+  private let pauseForMenuItem = NSMenuItem()
+  private let pauseForSubmenu = NSMenu()
+  private let resetCountdownMenuItem = NSMenuItem()
   private let breakNowMenuItem = NSMenuItem()
   private let checkForUpdatesMenuItem = NSMenuItem()
 
@@ -37,6 +39,16 @@ final class MenuBarController: NSObject {
     ofSize: NSFont.menuBarFont(ofSize: 0).pointSize,
     weight: .regular
   )
+
+  private static let pausePresetsMinutes = [15, 30, 45, 60, 90]
+
+  private static func pausePresetTitle(_ minutes: Int) -> String {
+    switch minutes {
+    case 60: return "1 hour"
+    case 90: return "1.5 hours"
+    default: return "\(minutes) minutes"
+    }
+  }
 
   init(scheduler: BreakScheduler, updaterUI: SunshineUpdaterUIController) {
     self.scheduler = scheduler
@@ -67,14 +79,26 @@ final class MenuBarController: NSObject {
     breakNowMenuItem.action = #selector(startBreakNow)
     menu.addItem(breakNowMenuItem)
 
-    restartMenuItem.title = "Restart"
-    restartMenuItem.target = self
-    restartMenuItem.action = #selector(restart)
-    menu.addItem(restartMenuItem)
+    resetCountdownMenuItem.title = "Reset Countdown"
+    resetCountdownMenuItem.target = self
+    resetCountdownMenuItem.action = #selector(resetCountdown)
+    menu.addItem(resetCountdownMenuItem)
 
     pauseMenuItem.target = self
     pauseMenuItem.action = #selector(togglePause)
     menu.addItem(pauseMenuItem)
+
+    pauseForMenuItem.title = "Pause Breaks For…"
+    pauseForMenuItem.submenu = pauseForSubmenu
+    for minutes in Self.pausePresetsMinutes {
+      let item = NSMenuItem(
+        title: Self.pausePresetTitle(minutes), action: #selector(pauseForPreset(_:)),
+        keyEquivalent: "")
+      item.target = self
+      item.tag = minutes
+      pauseForSubmenu.addItem(item)
+    }
+    menu.addItem(pauseForMenuItem)
 
     menu.addItem(.separator())
 
@@ -119,7 +143,8 @@ final class MenuBarController: NSObject {
       statusMenuItem.title = "Next break in \(scheduler.timeString)"
     }
 
-    pauseMenuItem.title = scheduler.isPaused ? "Resume breaks" : "Pause breaks"
+    pauseMenuItem.title = scheduler.isPaused ? "Resume Breaks" : "Pause Breaks"
+    pauseForMenuItem.isEnabled = !scheduler.isPaused
     breakNowMenuItem.isEnabled = !scheduler.isOnBreak
 
     let updatePending = updaterUI.pendingUpdate != nil
@@ -136,8 +161,12 @@ final class MenuBarController: NSObject {
     scheduler.togglePause()
   }
 
-  @objc private func restart() {
-    scheduler.restart()
+  @objc private func pauseForPreset(_ sender: NSMenuItem) {
+    scheduler.pause(forMinutes: sender.tag)
+  }
+
+  @objc private func resetCountdown() {
+    scheduler.resetCountdown()
   }
 
   @objc private func startBreakNow() {
