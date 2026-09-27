@@ -6,8 +6,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/octavore/sunshine.git",
       "state" : {
-        "revision" : "ffd95c24ac0610ae4444fb582034052c008676ad",
-        "version" : "0.1.0"
+        "revision" : "7c5025af95e600c16020f603a471edf69fa7e061",
+        "version" : "0.2.0"
       }
     }
   ],
